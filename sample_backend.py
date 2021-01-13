@@ -5,11 +5,18 @@ app = Flask(__name__)
 def hello_world():
     return 'Hello, World!'
 
-@app.route('/users', methods=['GET', 'POST'])
+@app.route('/users', methods=['GET', 'POST', 'DELETE'])
 def get_users():
    if request.method == 'GET':
       search_username = request.args.get('name')
-      if search_username :
+      search_job = request.args.get('job')
+      if search_username and search_job:
+         subdict = {'users_list' : []}
+         for user in users['users_list']:
+            if user['name'] == search_username and user['job'] == search_job:
+               subdict['users_list'].append(user)
+         return subdict
+      elif search_username :
          subdict = {'users_list' : []}
          for user in users['users_list']:
             if user['name'] == search_username:
@@ -24,14 +31,22 @@ def get_users():
       # 200 is the default code for a normal response
       return resp
 
-@app.route('/users/<id>')
+@app.route('/users/<id>', methods=['GET', 'DELETE'])
 def get_user(id):
-   if id :
+   if id:
       for user in users['users_list']:
-        if user['id'] == id:
-           return user
-      return ({})
-   return users
+         if user['id'] == id:
+            if request.method == 'GET':
+               return user
+            elif request.method == 'DELETE':
+               users['users_list'].remove(user)
+               return jsonify(success=True)
+      resp = jsonify({"Msg": "User not found."}), 404
+      return resp
+            #for user in users['users_list']:
+            #   if user['id'] == id:
+            #      del user
+            #return jsonify(success=True)
 
 users = { 
    'users_list' :
